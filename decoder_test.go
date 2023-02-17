@@ -63,6 +63,8 @@ var unmarshalTests = []struct {
 	{[]int{1, 5, 7}, new(*[]int), "<value><array><data><value><int>1</int></value><value><int>5</int></value><value><int>7</int></value></data></array></value>"},
 	{[]interface{}{"A", "5"}, new(interface{}), "<value><array><data><value><string>A</string></value><value><string>5</string></value></data></array></value>"},
 	{[]interface{}{"A", int64(5)}, new(interface{}), "<value><array><data><value><string>A</string></value><value><int>5</int></value></data></array></value>"},
+	{[]interface{}{int64(5), nil, "A"}, new(interface{}), "<value><array><data><value><int>5</int></value><value></value><value><string>A</string></value></data></array></value>"},
+	{[]interface{}{int64(5), nil, "A"}, new(interface{}), "<value><array><data><value><int>5</int></value><value/><value><string>A</string></value></data></array></value>"},
 
 	// struct
 	{book{"War and Piece", 20}, new(*book), "<value><struct><member><name>Title</name><value><string>War and Piece</string></value></member><member><name>Amount</name><value><int>20</int></value></member></struct></value>"},
@@ -137,6 +139,54 @@ func Test_unmarshalEmptyValueTag(t *testing.T) {
 
 	if err := unmarshal([]byte("<value/>"), &v); err != nil {
 		t.Fatalf("unmarshal error: %v", err)
+	}
+}
+
+const arrayWithStructsWithEmptyValuesXML = `
+<value>
+  <array>
+    <data>
+		<value>
+			<struct>
+				<member>
+					<name>Amount</name>
+					<value>
+						<int>42</int>
+					</value>
+				</member>
+				<member>
+					<name>Title</name>
+					<value/>
+				</member>
+			</struct>
+		</value>
+		<value>
+			<struct>
+				<member>
+					<name>Amount</name>
+					<value>
+						<int>42</int>
+					</value>
+				</member>
+				<member>
+					<name>Title</name>
+					<value>Just a Test</value>
+				</member>
+			</struct>
+		</value>
+    </data>
+  </array>
+</value>
+`
+
+func Test_unmarshalWithEmptyValueTags(t *testing.T) {
+	var v []book
+	if err := unmarshal([]byte(arrayWithStructsWithEmptyValuesXML), &v); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(v) != 2 {
+		t.Fatal("invalid array length")
 	}
 }
 
